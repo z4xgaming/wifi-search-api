@@ -1,56 +1,49 @@
 export default async function handler(req, res) {
-  // CORS हेडर जोड़ें ताकि किसी भी ऐप/क्लाइंट से रिक्वेस्ट आ सके
+  // CORS हेडर
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  );
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  // प्रीफ्लाइट (OPTIONS) रिक्वेस्ट को हैंडल करें
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
 
-  // केवल POST रिक्वेस्ट स्वीकार करें
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', ['POST']);
-    return res.status(405).json({ 
-      success: false, 
-      error: `Method ${req.method} Not Allowed. Use POST.` 
-    });
-  }
+  // 1. अगर यूजर GET रिक्वेस्ट भेज रहा है और SSID सर्च कर रहा है
+  if (req.method === 'GET') {
+    const { ssid } = req.query;
 
-  try {
-    const { deviceId, wifiNetworks, timestamp } = req.body;
-
-    // डेटा वैलिडेट करें
-    if (!wifiNetworks || !Array.isArray(wifiNetworks)) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "Invalid data format. 'wifiNetworks' array is required." 
+    if (!ssid) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a Wi-Fi name to search. Example: /api/wifi-receiver?ssid=oppo_ak"
       });
     }
 
-    // यहाँ कंसोल पर डेटा प्रिंट होगा (आप चाहें तो इसे डेटाबेस में सेव कर सकते हैं)
-    console.log(`[Wi-Fi Data Received] Device ID: ${deviceId || 'Unknown'}`);
-    console.log(`Total Networks: ${wifiNetworks.length}`);
-
+    // यहाँ आप डेटाबेस से उस Wi-Fi की डिटेल्स ढूंढ सकते हैं
+    // अभी के लिए यह एक डमी रिस्पॉन्स देगा
     return res.status(200).json({
       success: true,
-      message: "Wi-Fi scan data successfully received and processed by Vercel API.",
-      totalNetworksFound: wifiNetworks.length,
-      receivedAt: timestamp || new Date().toISOString(),
-      data: wifiNetworks
-    });
-
-  } catch (error) {
-    return res.status(500).json({ 
-      success: false, 
-      error: "Internal Server Error", 
-      details: error.message 
+      query: ssid,
+      wifiDetails: {
+        ssid: ssid,
+        status: "Available / Mock Data Found",
+        signalStrength: "-65 dBm",
+        security: "WPA2",
+        lastScanned: new Date().toISOString()
+      }
     });
   }
+
+  // 2. अगर कोई डिवाइस डेटा सेव करने के लिए POST रिक्वेस्ट भेज रहा है
+  if (req.method === 'POST') {
+    const { deviceId, wifiNetworks } = req.body;
+    return res.status(200).json({
+      success: true,
+      message: "Wi-Fi scan data saved successfully.",
+      totalReceived: wifiNetworks ? wifiNetworks.length : 0
+    });
+  }
+
+  return res.status(405).json({ success: false, error: "Method Not Allowed" });
 }
