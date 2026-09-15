@@ -1,0 +1,13 @@
+{
+  "name": "wifi-search-api",
+  "version": "1.0.0",
+  "description": "Real Wi-Fi data receiver API for Vercel",
+  "main": "api/wifi-receiver.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["wifi", "api", "vercel"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {}
+}
